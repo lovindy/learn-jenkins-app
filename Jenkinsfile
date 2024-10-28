@@ -11,7 +11,7 @@ pipeline {
             }
             steps {
                 sh '''
-                    echo 'Stating Step ...'
+                    echo 'Starting Build Step...'
                     ls -la
                     node --version
                     npm --version
@@ -22,7 +22,7 @@ pipeline {
             }
         }
         stage('Test') {
-            step {
+            steps {
                 echo 'Test Stage'
             }
         }
