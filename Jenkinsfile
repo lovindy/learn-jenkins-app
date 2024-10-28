@@ -23,6 +23,40 @@ pipeline {
             }
         }
         stage('Test') {
+            parallel {
+                stage('Unit Tests') {
+                    agent {
+                        docker {
+                            image 'node:18-alpine'
+                            reuseNode true
+                        }
+                    }
+                    steps {
+                        sh '''
+                            test -f build/index.html
+                            npm test
+                        '''
+                    }
+                }
+                stage('E2E') {
+                    agent {
+                        docker {
+                            image 'mcr.microsoft.com/playwright:v1.39.0-jammy'
+                            reuseNode true
+                        }
+                    }
+                    steps {
+                        sh '''
+                            npm install serve
+                            node_modules/.bin/serve -s build &
+                            sleep 10
+                            npx playwright test --reporter=html
+                        '''
+                    }
+                }
+            }
+        }
+        stage('Deploy') {
             agent {
                 docker {
                     image 'node:18-alpine'
@@ -31,16 +65,16 @@ pipeline {
             }
             steps {
                 sh '''
-                    'test -f build/index.html'
-                    npm test
+                    echo 'Deploying the application ...'
+                    npm install netlify-cli -g
+                    netlify --version
                 '''
             }
         }
     }
     post {
         always {
-            echo 'Pipeline finished.'
-            junit 'test-results/junit.xml'
+            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'post'])
         }
     }
 }
