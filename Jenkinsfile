@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     environment {
-        NETLIFY_SITE_ID = 'PUT YOUR NETLIFY SITE ID HERE'
-        NETLIFY_AUTH_TOKEN = credentials('netlify-token')
+        NETLIFY_SITE_ID = '0df5e7ad-74e7-4842-800f-361ecb53b115'
+        NETLIFY_AUTH_TOKEN = credentials('nfp_ixPMwXoLBPSFN3kpRCWqQtbwJyjR4iM97480')
     }
 
     stages {
@@ -16,11 +16,15 @@ pipeline {
             }
             steps {
                 sh '''
+                    echo "Listing files before build:"
                     ls -la
+                    echo "Node version:"
                     node --version
+                    echo "NPM version:"
                     npm --version
                     npm ci
                     npm run build
+                    echo "Listing files after build:"
                     ls -la
                 '''
             }
@@ -38,7 +42,7 @@ pipeline {
 
                     steps {
                         sh '''
-                            #test -f build/index.html
+                            echo "Running unit tests..."
                             npm test
                         '''
                     }
@@ -59,16 +63,28 @@ pipeline {
 
                     steps {
                         sh '''
+                            echo "Installing serve..."
                             npm install serve
+                            echo "Starting server..."
                             node_modules/.bin/serve -s build &
                             sleep 10
-                            npx playwright test  --reporter=html
+                            echo "Running Playwright tests..."
+                            npx playwright test --reporter=html
                         '''
                     }
 
                     post {
                         always {
-                            publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright Local', reportTitles: '', useWrapperFileDirectly: true])
+                            publishHTML([
+                                allowMissing: false,
+                                alwaysLinkToLastBuild: false,
+                                keepAll: false,
+                                reportDir: 'playwright-report',
+                                reportFiles: 'index.html',
+                                reportName: 'Playwright Local',
+                                reportTitles: '',
+                                useWrapperFileDirectly: true
+                            ])
                         }
                     }
                 }
@@ -84,7 +100,9 @@ pipeline {
             }
             steps {
                 sh '''
+                    echo "Installing Netlify CLI..."
                     npm install netlify-cli
+                    echo "Netlify CLI version:"
                     node_modules/.bin/netlify --version
                     echo "Deploying to staging. Site ID: $NETLIFY_SITE_ID"
                     node_modules/.bin/netlify status
@@ -110,7 +128,9 @@ pipeline {
             }
             steps {
                 sh '''
+                    echo "Installing Netlify CLI..."
                     npm install netlify-cli
+                    echo "Netlify CLI version:"
                     node_modules/.bin/netlify --version
                     echo "Deploying to production. Site ID: $NETLIFY_SITE_ID"
                     node_modules/.bin/netlify status
@@ -133,13 +153,23 @@ pipeline {
 
             steps {
                 sh '''
-                    npx playwright test  --reporter=html
+                    echo "Running production E2E tests..."
+                    npx playwright test --reporter=html
                 '''
             }
 
             post {
                 always {
-                    publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'playwright-report', reportFiles: 'index.html', reportName: 'Playwright E2E', reportTitles: '', useWrapperFileDirectly: true])
+                    publishHTML([
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: false,
+                        keepAll: false,
+                        reportDir: 'playwright-report',
+                        reportFiles: 'index.html',
+                        reportName: 'Playwright E2E',
+                        reportTitles: '',
+                        useWrapperFileDirectly: true
+                    ])
                 }
             }
         }
