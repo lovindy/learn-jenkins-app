@@ -37,4 +37,10 @@ pipeline {
             }
         }
     }
+    post {
+        always {
+            echo 'Pipeline finished.'
+            junit 'test-results/junit.xml'
+        }
+    }
 }
